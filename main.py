@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import time
 import pandas as pd
+import requests
 from services.auth.login_wall import render_login_wall
 from services.state.session_defaults import initial_session_defaults
 from services.config.workout_config import EXERCISE_OPTIONS
@@ -199,11 +200,34 @@ def main():
             unsafe_allow_html=True,
         )
     else:
+
+        TURN_CREDENTIALS_URL = (
+            "https://fit-vision-ai-gym-trainer.metered.live/"
+            "api/v1/turn/credentials?apiKey=54ed52fefd6024ee83ec74f69e3f1c27825b"
+        )
+
+        response = requests.get(TURN_CREDENTIALS_URL, timeout=10)
+        response.raise_for_status()
+
+        turn_ice_servers = response.json()
+
+        rtc_configuration = {
+            "iceServers": [
+                # STUN
+                {
+                    "urls": ["stun:stun.l.google.com:19302"]
+                },
+
+                # TURN servers returned by Metered
+                *turn_ice_servers
+            ]
+        }
+
         context = webrtc_streamer(
             key="exercise-analysis",
             mode=WebRtcMode.SENDRECV,
             video_processor_factory=VideoProcessorClass,
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            rtc_configuration=rtc_configuration,
             media_stream_constraints={
                 "video": True,
                 "audio": False
