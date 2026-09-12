@@ -1,8 +1,16 @@
 import sqlite3
 import streamlit as st
 from pathlib import Path
+import os
 
-_DB_PATH = str(Path(__file__).parent.parent.parent / "data.db")
+# Local database location
+LOCAL_DB = Path(__file__).parent.parent.parent / "data.db"
+
+# Streamlit Cloud runs code from /mount/src (read-only), so use /tmp there.
+if os.path.exists("/mount/src"):
+    _DB_PATH = "/tmp/ai_gym_data.db"
+else:
+    _DB_PATH = str(LOCAL_DB)
 
 
 @st.cache_resource
